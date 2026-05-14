@@ -9,7 +9,7 @@ import uuid
 # DESIGN PATTERNS IMPLEMENTATION
 # ============================================
 
-# 1. STRATEGY PATTERN - Pricing algorithms
+# ===== 1. STRATEGY PATTERN =====
 class PricingStrategy:
     def calculate(self, daily_rate: float, days: int) -> float:
         pass
@@ -26,7 +26,7 @@ class MonthlyPricing(PricingStrategy):
     def calculate(self, daily_rate, days):
         return daily_rate * days * 0.8
 
-# 2. DECORATOR PATTERN - Add-ons
+# ===== 2. DECORATOR PATTERN =====
 class Workspace:
     def __init__(self, name, space_type, daily_rate, days, strategy):
         self.name = name
@@ -53,7 +53,7 @@ class AddonDecorator(Workspace):
     def get_cost(self):
         return self.workspace.get_cost() + self.addon_price_per_day * self.workspace.days
 
-# 3. OBSERVER PATTERN - Notifications
+# ===== 3. OBSERVER PATTERN =====
 class Observer:
     def update(self, message): pass
 
@@ -76,28 +76,20 @@ class BookingSubject:
         for observer in self.observers:
             observer.update(message)
 
-# 4. COMMAND PATTERN - Booking commands
+# ===== 4. COMMAND PATTERN =====
 class Command:
     def execute(self): pass
-    def undo(self): pass
 
 class BookingCommand(Command):
     def __init__(self, booking_data, subject):
         self.booking_data = booking_data
         self.subject = subject
-        self.executed = False
     
     def execute(self):
         self.subject.notify(f"Booking confirmed: {self.booking_data['workspace']}")
-        self.executed = True
         return {"status": "confirmed", "id": str(uuid.uuid4())[:8]}
-    
-    def undo(self):
-        if self.executed:
-            self.subject.notify(f"Booking cancelled: {self.booking_data['workspace']}")
-            return {"status": "cancelled"}
 
-# 5. FACADE PATTERN - Simplified booking
+# ===== 5. FACADE PATTERN =====
 class BookingFacade:
     def __init__(self):
         self.subject = BookingSubject()
@@ -105,7 +97,6 @@ class BookingFacade:
         self.subject.attach(SMSNotifier())
     
     def create_booking(self, space, days, plan, addons):
-        # Strategy Pattern - Choose pricing
         if plan == "weekly":
             strategy = WeeklyPricing()
         elif plan == "monthly":
@@ -113,22 +104,14 @@ class BookingFacade:
         else:
             strategy = DailyPricing()
         
-        # Base workspace
         workspace = Workspace(space["name"], space["type"], space["daily_rate"], days, strategy)
         
-        # Decorator Pattern - Add add-ons
-        addon_prices = {"parking": 15, "coffee": 8, "monitor": 12}
+        addon_prices = {"parking": 1500, "coffee": 800, "monitor": 1200}
         for addon in addons:
             if addon in addon_prices:
                 workspace = AddonDecorator(workspace, addon.title(), addon_prices[addon])
         
-        # Command Pattern - Execute booking
-        booking_data = {
-            "workspace": workspace.get_description(),
-            "total": workspace.get_cost(),
-            "days": days
-        }
-        command = BookingCommand(booking_data, self.subject)
+        command = BookingCommand({"workspace": workspace.get_description()}, self.subject)
         result = command.execute()
         
         return {
@@ -139,35 +122,96 @@ class BookingFacade:
             "days": days
         }
 
+# ===== 6. FACTORY PATTERN =====
+class SpaceFactory:
+    @staticmethod
+    def create_spaces():
+        return [
+            {"id": 1, "name": "The Focus", "type": "Dedicated Desk", "daily_rate": 8000, "capacity": 1, "icon": "🎯", "features": ["Ergonomic chair", "Monitor", "Locking cabinet"]},
+            {"id": 2, "name": "The Hive", "type": "Open Space", "daily_rate": 40000, "capacity": 8, "icon": "🐝", "features": ["Hot desks", "Coffee bar", "Fast WiFi"]},
+            {"id": 3, "name": "The Garden", "type": "Open Space", "daily_rate": 54000, "capacity": 12, "icon": "🌿", "features": ["Plants", "Natural light", "Quiet zone"]},
+            {"id": 4, "name": "The Studio", "type": "Private Office", "daily_rate": 80000, "capacity": 20, "icon": "🏢", "features": ["Whiteboard", "TV screen", "Sofa"]},
+            {"id": 5, "name": "The Loft", "type": "Private Office", "daily_rate": 105000, "capacity": 30, "icon": "🏰", "features": ["Private balcony", "Kitchenette", "Meeting table"]},
+            {"id": 6, "name": "The Stage", "type": "Meeting Room", "daily_rate": 150000, "capacity": 60, "icon": "🎪", "features": ["Projector", "Sound system", "Video conferencing"]},
+        ]
+
+# ===== 7. ITERATOR PATTERN =====
+class SpaceIterator:
+    def __init__(self, spaces):
+        self.spaces = spaces
+        self.index = 0
+    
+    def has_next(self):
+        return self.index < len(self.spaces)
+    
+    def next(self):
+        space = self.spaces[self.index]
+        self.index += 1
+        return space
+
+# ===== 8. TEMPLATE PATTERN =====
+class BookingTemplate:
+    def process(self, space, days, addons):
+        self.validate_booking(space, days)
+        self.calculate_price(space, days, addons)
+        self.create_booking()
+        self.send_confirmation()
+    
+    def validate_booking(self, space, days):
+        pass
+    
+    def calculate_price(self, space, days, addons):
+        pass
+    
+    def create_booking(self):
+        pass
+    
+    def send_confirmation(self):
+        pass
+
+# ===== 9. STATE PATTERN =====
+class BookingState:
+    def confirm(self): pass
+    def cancel(self): pass
+
+class PendingState(BookingState):
+    def confirm(self): return ConfirmedState()
+    def cancel(self): return CancelledState()
+
+class ConfirmedState(BookingState):
+    def confirm(self): return self
+    def cancel(self): return CancelledState()
+
+class CancelledState(BookingState):
+    def confirm(self): return self
+    def cancel(self): return self
+
+# ===== 10. ADAPTER PATTERN =====
+class PaymentAdapter:
+    @staticmethod
+    def format_response(data):
+        return {
+            "status": data.get("success", True),
+            "transaction_id": data.get("booking_id"),
+            "amount": data.get("total_cost"),
+            "currency": "KZT"
+        }
+
 # ============================================
 # FASTAPI APPLICATION
 # ============================================
 
 app = FastAPI(title="NestWorks API", description="Coworking Space with 10 Design Patterns")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-# CORS for React
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Sample data - Factory Pattern creates these
-SPACES = [
-    {"id": 1, "name": "The Hive", "type": "Open Space", "daily_rate": 35, "capacity": 45, "icon": "🐝", "features": ["Hot desks", "Coffee bar", "Fast WiFi"]},
-    {"id": 2, "name": "The Focus", "type": "Dedicated Desk", "daily_rate": 120, "capacity": 1, "icon": "🎯", "features": ["Ergonomic chair", "Monitor", "Locking cabinet"]},
-    {"id": 3, "name": "The Studio", "type": "Private Office", "daily_rate": 450, "capacity": 6, "icon": "🏢", "features": ["Whiteboard", "TV screen", "Sofa"]},
-    {"id": 4, "name": "The Loft", "type": "Private Office", "daily_rate": 850, "capacity": 12, "icon": "🏰", "features": ["Private balcony", "Kitchen", "Meeting room"]},
-    {"id": 5, "name": "The Stage", "type": "Meeting Room", "daily_rate": 250, "capacity": 20, "icon": "🎪", "features": ["Projector", "Sound system", "Video conferencing"]},
-]
+SPACES = SpaceFactory.create_spaces()
 
 class BookingRequest(BaseModel):
     space_id: int
@@ -175,37 +219,24 @@ class BookingRequest(BaseModel):
     plan: str
     addons: List[str] = []
 
-# ============================================
-# API ENDPOINTS
-# ============================================
-
 @app.get("/")
 def root():
-    return {
-        "message": "NestWorks API", 
-        "patterns": ["Strategy", "Decorator", "Observer", "Command", "Facade", "Factory", "Iterator", "State", "Template", "Adapter"]
-    }
+    return {"message": "NestWorks API", "patterns": ["Strategy", "Decorator", "Observer", "Command", "Facade", "Factory", "Iterator", "Template", "State", "Adapter"]}
 
 @app.get("/spaces")
 def get_spaces():
-    """Iterator Pattern - Returns all spaces"""
-    return SPACES
-
-@app.get("/spaces/{space_id}")
-def get_space(space_id: int):
-    space = next((s for s in SPACES if s["id"] == space_id), None)
-    if not space:
-        raise HTTPException(status_code=404, detail="Space not found")
-    return space
+    iterator = SpaceIterator(SPACES)
+    spaces = []
+    while iterator.has_next():
+        spaces.append(iterator.next())
+    return spaces
 
 @app.post("/calculate")
 def calculate_price(booking: BookingRequest):
-    """Strategy + Decorator Pattern"""
     space = next((s for s in SPACES if s["id"] == booking.space_id), None)
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")
     
-    # Strategy Pattern
     if booking.plan == "weekly":
         strategy = WeeklyPricing()
     elif booking.plan == "monthly":
@@ -215,8 +246,7 @@ def calculate_price(booking: BookingRequest):
     
     workspace = Workspace(space["name"], space["type"], space["daily_rate"], booking.days, strategy)
     
-    # Decorator Pattern
-    addon_prices = {"parking": 15, "coffee": 8, "monitor": 12}
+    addon_prices = {"parking": 1500, "coffee": 800, "monitor": 1200}
     total_addon_cost = 0
     for addon in booking.addons:
         if addon in addon_prices:
@@ -225,17 +255,13 @@ def calculate_price(booking: BookingRequest):
     
     return {
         "base_price": space["daily_rate"] * booking.days,
-        "discounted_price": workspace.get_cost() - total_addon_cost,
         "addons_total": total_addon_cost,
         "total_price": workspace.get_cost(),
         "savings": (space["daily_rate"] * booking.days) - (workspace.get_cost() - total_addon_cost),
-        "days": booking.days,
-        "plan": booking.plan
     }
 
 @app.post("/book")
 def create_booking(booking: BookingRequest):
-    """Facade + Command + Observer Pattern"""
     space = next((s for s in SPACES if s["id"] == booking.space_id), None)
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")
@@ -243,8 +269,8 @@ def create_booking(booking: BookingRequest):
     facade = BookingFacade()
     result = facade.create_booking(space, booking.days, booking.plan, booking.addons)
     
-    return result
+    return PaymentAdapter.format_response(result)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000)
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
