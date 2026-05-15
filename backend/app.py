@@ -48,7 +48,7 @@ class Space:
         }
 
 
-# 1. STRATEGY PATTERN
+# 1. strategy
 
 class PricingStrategy(ABC):
 
@@ -75,7 +75,7 @@ class MonthlyPricing(PricingStrategy):
         return daily_rate * days * 0.8
 
 
-# 2. DECORATOR PATTERN
+# 2. decorator
 
 class WorkspaceComponent(ABC):
 
@@ -134,7 +134,7 @@ class AddonDecorator(WorkspaceComponent):
     def days(self):
         return self.workspace.days
 
-# 3. OBSERVER PATTERN
+# 3. observer
 
 class Observer(ABC):
 
@@ -168,7 +168,7 @@ class BookingSubject:
             observer.update(message)
 
 
-# 4. COMMAND PATTERN
+# 4. command
 
 class Command(ABC):
 
@@ -196,7 +196,7 @@ class BookingCommand(Command):
         }
 
 
-# 5. FACTORY PATTERN
+# 5. factory
 
 class SpaceFactory:
 
@@ -291,7 +291,7 @@ class SpaceFactory:
         ]
 
 
-# 6. ITERATOR PATTERN
+# 6. iterator
 
 class SpaceIterator:
 
@@ -314,7 +314,7 @@ class SpaceIterator:
         return space
 
 
-# 7. TEMPLATE PATTERN
+# 7. template
 
 class BookingTemplate(ABC):
 
@@ -390,7 +390,7 @@ class StandardBooking(BookingTemplate):
         )
 
 
-# 8. STATE PATTERN
+# 8. state
 
 class BookingState(ABC):
 
@@ -445,7 +445,7 @@ class BookingContext:
         return self.state.__class__.__name__
 
 
-# 9. ADAPTER PATTERN
+# 9. adapter
 
 class ExternalPaymentAPI:
 
@@ -483,7 +483,7 @@ class PaymentAdapter:
             "KZT"
         }
 
-# 10. FACADE PATTERN
+# 10. facade
 
 class BookingFacade:
 
@@ -557,10 +557,6 @@ class BookingFacade:
             "days": days
         }
 
-
-# =========================================================
-# DATA
-# =========================================================
 
 SPACES = SpaceFactory.create_spaces()
 
